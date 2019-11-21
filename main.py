@@ -87,13 +87,17 @@ def main():
     artist_name = current_song["item"]["artists"][0]["name"]
     album_name = current_song["item"]["album"]["name"]
 
+    log(f"Playing {song_name} by {artist_name}")
+
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
     song = genius.search_song(song_name, artist_name)
-
-    log(f"Playing {song_name} by {artist_name}")
     if isinstance(song, type(None)):
-        log("Song not found on Genius")
-        return
+        log("Song not found on Genius trying remove parens")
+        song_search = re.sub("\([\w\W]*\)", "", song_name)
+        song = genius.search_song(song_search, artist_name)
+        if isinstance(song, type(None)):
+            log(f"Song {song_search} by {artist_name} not found on Genius")
+            return
 
     paragraphs = song.lyrics.split("\n\n")
 
