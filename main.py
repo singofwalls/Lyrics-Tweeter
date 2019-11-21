@@ -4,6 +4,8 @@ import spotipy.util
 import twitter
 import json
 import random
+import urllib
+import requests
 
 from functools import reduce
 
@@ -11,6 +13,24 @@ from functools import reduce
 CHANCE_TO_TWEET = 1
 CHANCE_TO_ADD_LINE = 2
 TWEET_LIMIT = 280
+
+
+def get_apple_link(search_terms):
+    """Get a link to the song from Apple based on artist, name, and album."""
+
+    query = " ".join(search_terms)
+    query = urllib.parse.quote_plus(query)
+    response = requests.get(f"https://itunes.apple.com/search?term={query}&limit=1")
+    if not response.ok or not response.content:
+        return ""
+
+    content = json.loads(response.content)
+    results = content["results"]
+    if not results:
+        return ""
+
+    url = results[0]["trackViewUrl"]
+    return url
 
 
 def get_spotify(s_creds):
@@ -54,6 +74,7 @@ def main():
 
     song_name = current_song["item"]["name"]
     artist_name = current_song["item"]["artists"][0]["name"]
+    album_name = current_song["item"]["album"]["name"]
 
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
     song = genius.search_song(song_name, artist_name)
@@ -77,11 +98,15 @@ def main():
     chosen_paragraphs = set()
     selected_lines = []
     while len(paragraphs) != len(chosen_paragraphs):
-        paragraph_num = random.choice(list(set(range(0, len(paragraphs))) - chosen_paragraphs))
+        paragraph_num = random.choice(
+            list(set(range(0, len(paragraphs))) - chosen_paragraphs)
+        )
         paragraph = paragraphs[paragraph_num]
 
         lines = [line for line in paragraph.split("\n") if line and line[0] != "["]
-        start = random.choice(list(set(range(0, len(lines))) - chosen_lines[paragraph_num]))
+        start = random.choice(
+            list(set(range(0, len(lines))) - chosen_lines[paragraph_num])
+        )
         chosen_lines[paragraph_num].add(start)
         if len(lines) == len(chosen_lines[paragraph_num]):
             chosen_paragraphs.add(paragraph_num)
@@ -105,7 +130,7 @@ def main():
                 break
 
             next_line = lines[next_line_num]
-            current_len = sum(map(len, selected_lines))
+            current_len = len("\n".join(selected_lines))
             if current_len + len(next_line) > TWEET_LIMIT:
                 break
             selected_lines.append(next_line)
@@ -113,8 +138,18 @@ def main():
 
     print(selected_lines)
 
-    # twit = get_twitter(creds["twitter"])
-    # twit.PostUpdate()
+    status = "\n".join(selected_lines)
+
+    twit = get_twitter(creds["twitter"])
+    tweet = twit.PostUpdate(status)
+
+    spotify_link = current_song["item"]["external_urls"]["spotify"]
+    apple_link = get_apple_link((artist_name, song_name, album_name))
+
+    links = spotify_link
+    if apple_link:
+        links += f"\n{apple_link}"
+    twit.PostUpdate(links, in_reply_to_status_id=tweet.id)
 
 
 if __name__ == "__main__":
