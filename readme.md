@@ -19,20 +19,15 @@ In a sense, the bot is a bit of a roulette due to lyrics not being vetted and tw
 I acknowledge the untidiness of the code. I originally intended for this to be a quick-and-dirty private repo but ultimately decided to go public.
 
 ## Setup
-To host your own, credentials must be obtained for [Spotify](https://developer.spotify.com/dashboard/applications), [Genius](https://genius.com/api-clients/new), [Twitter](https://developer.twitter.com/en/application/use-case), and [Last.fm](https://www.last.fm/api/account/create). These should be placed in a creds.json file as demonstrated in the [example_creds.json](example_creds.json), replacing everything between "<>." Python 3.6 (or perhaps greater) is necesary to run this code. [Get Python and Pip here](https://www.python.org/downloads/). The necessary libraries can be installed with pip using the [requirements.txt](requirements.txt) file. Generally it is a good idea to first create a virtual environment. If you have not yet cloned this repo, do so using your VCS of choice ([git can be downloaded here](https://git-scm.com/downloads)).
+To host your own, credentials must be obtained for [Spotify](https://developer.spotify.com/dashboard/applications), [Genius](https://genius.com/api-clients/new), [Twitter](https://developer.twitter.com/en/application/use-case), and [Last.fm](https://www.last.fm/api/account/create). These should be placed in a creds.json file as demonstrated in the [example_creds.json](example_creds.json), replacing everything between "<>." Python 3.6 (or perhaps greater) is necesary to run this code. [Get Python and Pip here](https://www.python.org/downloads/). The necessary libraries can be installed with pip using the [requirements.txt](requirements.txt) file. If you have not yet cloned this repo, do so using your VCS of choice ([git can be downloaded here](https://git-scm.com/downloads)).
 
 Clone the repo.
 ```Shell
 git clone https://github.com/singofwalls/Lyrics-Tweeter.git
 ```
-Create and activate a virtual environment.
-```Shell
-cd Lyrics-Tweeter
-python -m venv .venv
-./.venv/Scripts/activate
-```
 Install the dependencies
 ```Shell
+cd Lyrics-Tweeter
 sudo pip install -r requirements.txt
 ```
 Spotipy may not work if installed with pip. In this case, install it from the Github repo:
