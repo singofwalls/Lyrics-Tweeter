@@ -11,6 +11,7 @@ import urllib
 import datetime
 import traceback
 import os
+import re
 
 from functools import reduce
 
@@ -28,6 +29,7 @@ def get_apple_link(search_terms):
     """Get a link to the song from Apple based on artist, name, and album."""
 
     query = " ".join(search_terms)
+    query = re.sub("\([\w\W]*\)", "", query)  # Remove stuff in parens
     query = urllib.parse.quote_plus(query)
     response = requests.get(f"https://itunes.apple.com/search?term={query}&limit=1")
     if not response.ok or not response.content:
