@@ -24,6 +24,8 @@ LOG_FILE = "log.txt"
 LOG_SIZE = 10000
 LOG_TIMESTAMP = "%b %d, %Y %I:%M:%S %p"
 
+GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
+
 
 def get_apple_link(search_terms):
     """Get a link to the song from Apple based on artist, name, and album."""
@@ -162,10 +164,12 @@ def main():
     apple_link = get_apple_link((artist_name, song_name, album_name))
     genius_link = song.url
 
-    links = genius_link + "\n" + spotify_link
+    reply = f"\n\ngenius: {genius_link}\nspotify: {spotify_link}"
     if apple_link:
-        links += f"\n{apple_link}"
-    twit.PostUpdate(links, in_reply_to_status_id=tweet.id)
+        reply += f"\napple: {apple_link}"
+
+    reply += f"\n\ngithub: {GITHUB_LINK}"
+    twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
 
 
 def log(message):
