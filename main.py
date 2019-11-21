@@ -3,17 +3,25 @@ import lyricsgenius
 import spotipy
 import spotipy.util
 import twitter
+import requests
+
 import json
 import random
 import urllib
-import requests
+import datetime
+import traceback
+import os
 
 from functools import reduce
 
 
-CHANCE_TO_TWEET = 1
+CHANCE_TO_TWEET = 10
 CHANCE_TO_ADD_LINE = 2
 TWEET_LIMIT = 280
+
+LOG_FILE = "log.txt"
+LOG_SIZE = 10000
+LOG_TIMESTAMP = "%b %d, %Y %I:%M:%S %p"
 
 
 def get_apple_link(search_terms):
@@ -70,7 +78,7 @@ def main():
     current_song = spotify.current_user_playing_track()
 
     if isinstance(current_song, type(None)):
-        print("Not playing a song currently")
+        log("Not playing a song currently")
         return
 
     song_name = current_song["item"]["name"]
@@ -80,19 +88,20 @@ def main():
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
     song = genius.search_song(song_name, artist_name)
 
+    log(f"Playing {song_name} by {artist_name}")
     if isinstance(song, type(None)):
-        print("Song not found on Genius")
+        log("Song not found on Genius")
         return
 
     paragraphs = song.lyrics.split("\n\n")
 
     if not paragraphs:
-        print("No paragraphs")
+        log("No paragraphs")
         return
 
     if random.randrange(0, CHANCE_TO_TWEET):
         # One in ten chance to tweet lyrics
-        print("Failed roll")
+        log("Failed roll")
         return
 
     chosen_lines = [set()] * len(paragraphs)
@@ -137,10 +146,10 @@ def main():
             selected_lines.append(next_line)
         break
 
-    print(selected_lines)
-
     status = "\n".join(selected_lines)
+    log("Tweeting:\n" + status)
 
+    return
     twit = get_twitter(creds["twitter"])
     tweet = twit.PostUpdate(status)
 
@@ -153,5 +162,33 @@ def main():
     twit.PostUpdate(links, in_reply_to_status_id=tweet.id)
 
 
+def log(message):
+    """Log to the log file."""
+    # Halve log if greater than 1000 lines
+    print(message)
+
+    
+    with open(LOG_FILE, "a") as log:
+        log.write(datetime.datetime.now().strftime(
+            LOG_TIMESTAMP) + " " + message + "\n")
+
+    with open(LOG_FILE) as f:
+        contents = f.read()
+        lines_num = contents.count("\n")
+        if lines_num > LOG_SIZE:
+            lines = contents.split("\n")
+            line_index = lines_num - LOG_SIZE
+            lines = lines[line_index:]
+
+            with open(LOG_FILE, "w") as f:
+                f.write("\n".join(lines))
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        tb = traceback.format_exception(etype=type(e), value=e,
+                                        tb=e.__traceback__)
+        log("ERROR\n" + "".join(tb))
+        raise e
