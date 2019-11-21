@@ -17,7 +17,7 @@ import re
 from functools import reduce
 
 
-CHANCE_TO_TWEET = 50
+CHANCE_TO_TWEET = 40
 CHANCE_TO_ADD_LINE = 2
 TWEET_LIMIT = 280
 
