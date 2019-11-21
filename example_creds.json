@@ -1,0 +1,24 @@
+{
+    "spotify": {
+        "username": "<username>",
+        "scopes": "user-read-currently-playing",
+        "client_id": "<client_id>",
+        "client_secret": "<client_secret>",
+        "redirect_uri": "https://localhost"
+    },
+    "genius": {
+        "client access token": "<client access token>"
+    },
+    "twitter": {
+        "consumer key": "<consumer key>",
+        "consumer secret": "<consumer secret>",
+        "access token": "<access token>",
+        "access token secret": "<access token secret>"
+    },
+    "lastfm": {
+        "api key": "<api key>",
+        "shared secret": "<shared secret>",
+        "username": "<username>",
+        "password": "<password>"
+    }
+}
