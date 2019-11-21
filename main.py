@@ -149,7 +149,6 @@ def main():
     status = "\n".join(selected_lines)
     log("Tweeting:\n" + status)
 
-    return
     twit = get_twitter(creds["twitter"])
     tweet = twit.PostUpdate(status)
 
