@@ -156,7 +156,7 @@ def main():
 
     spotify_link = current_song["item"]["external_urls"]["spotify"]
     apple_link = get_apple_link((artist_name, song_name, album_name))
-    genius_link = song["url"]
+    genius_link = song.url
 
     links = genius_link + "\n" + spotify_link
     if apple_link:
