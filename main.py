@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.7
 import lyricsgenius
 import spotipy
 import spotipy.util
