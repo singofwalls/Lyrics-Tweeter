@@ -3,6 +3,7 @@ import lyricsgenius
 import spotipy
 import spotipy.util
 import twitter
+import pylast
 import requests
 
 import json
@@ -16,7 +17,7 @@ import re
 from functools import reduce
 
 
-CHANCE_TO_TWEET = 10
+CHANCE_TO_TWEET = 15
 CHANCE_TO_ADD_LINE = 2
 TWEET_LIMIT = 280
 
@@ -27,12 +28,28 @@ LOG_TIMESTAMP = "%b %d, %Y %I:%M:%S %p"
 GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 
 
-def get_apple_link(search_terms):
+def get_lastfm_link(artist, track, l_creds):
+    """Get a link to the song from last fm based on artist and name."""
+    pass_hash = pylast.md5(l_creds["password"])
+    network = pylast.LastFMNetwork(api_key=l_creds["api key"], 
+                                   api_secret=l_creds["shared secret"], 
+                                   username=l_creds["username"], 
+                                   password_hash=pass_hash)
+
+    song = network.get_track(artist, track)
+    if isinstance(song, type(None)):
+        log("Song not found on Lastfm trying remove parens")
+        song_search = re.sub("\([\w\W]*\)", "", track)
+        song = network.get_track(artist, track)
+        if isinstance(song, type(None)):
+            log(f"Song {song_search} by {artist} not found on Last.fm")
+            return
+    return song.get_url() + "/+lyrics"
+
+
+def get_apple_link(query):
     """Get a link to the song from Apple based on artist, name, and album."""
 
-    query = " ".join(search_terms)
-    query = re.sub("\([\w\W]*\)", "", query)  # Remove stuff in parens
-    query = urllib.parse.quote_plus(query)
     response = requests.get(f"https://itunes.apple.com/search?term={query}&limit=1")
     if not response.ok or not response.content:
         return ""
@@ -160,13 +177,22 @@ def main():
     twit = get_twitter(creds["twitter"])
     tweet = twit.PostUpdate(status)
 
-    spotify_link = current_song["item"]["external_urls"]["spotify"]
-    apple_link = get_apple_link((artist_name, song_name, album_name))
-    genius_link = song.url
+    query = " ".join((artist_name, song_name, album_name))
+    query = re.sub("\([\w\W]*\)", "", query)  # Remove stuff in parens
+    query = urllib.parse.quote_plus(query)
 
-    reply = f"\n\ngenius: {genius_link}\nspotify: {spotify_link}"
+    apple_link = get_apple_link(query)
+    genius_link = song.url
+    spotify_link = current_song["item"]["external_urls"]["spotify"]
+
+    lastfm_link = get_lastfm_link(artist_name, song_name, creds["lastfm"])
+
+    reply = f"\n\ngenius: {genius_link}"
+    if lastfm_link:
+        reply += f"\nlastfm: {lastfm_link}"
     if apple_link:
         reply += f"\napple: {apple_link}"
+    reply += f"\nspotify: {spotify_link}"
 
     reply += f"\n\ngithub: {GITHUB_LINK}"
     twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
