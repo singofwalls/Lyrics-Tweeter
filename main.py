@@ -63,15 +63,21 @@ def get_apple_link(query):
     return url
 
 
-def get_spotify(s_creds):
+def get_spotify(s_creds, usernum):
     """Get the spotify object from which to make requests."""
     # Authorize Spotify
+    cache_path = f"cache/{usernum}/"
+    try:
+        os.mkdir(cache_path)
+    except FileExistsError:
+        pass
     token = spotipy.util.prompt_for_user_token(
-        s_creds["username"],
+        s_creds["usernames"][usernum],
         s_creds["scopes"],
         s_creds["client_id"],
         s_creds["client_secret"],
         s_creds["redirect_uri"],
+        cache_path + ".cache"
     )
 
     return spotipy.Spotify(auth=token)
@@ -90,12 +96,9 @@ def get_twitter(t_creds):
     return api
 
 
-def main():
-
-    with open("creds.json") as f:
-        creds = json.load(f)
-
-    spotify = get_spotify(creds["spotify"])
+def run(usernum, creds):
+    
+    spotify = get_spotify(creds["spotify"], usernum)
     current_song = spotify.current_user_playing_track()
 
     if isinstance(current_song, type(None)):
@@ -174,7 +177,7 @@ def main():
     status = "\n".join(selected_lines)
     log("Tweeting:\n" + status)
 
-    twit = get_twitter(creds["twitter"])
+    twit = get_twitter(creds["twitter"][usernum])
     tweet = twit.PostUpdate(status)
 
     query = " ".join((artist_name, song_name, album_name))
@@ -194,6 +197,18 @@ def main():
         reply += f"\napple: {apple_link}"
     reply += f"\nspotify: {spotify_link}"
     twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
+
+
+
+def main():
+
+    with open("creds.json") as f:
+        creds = json.load(f)
+
+    users = len(creds["spotify"]["usernames"])
+    for usernum in range(0, users):
+        run(usernum, creds)
+
 
 
 def log(message):
