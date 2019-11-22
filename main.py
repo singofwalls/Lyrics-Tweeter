@@ -193,8 +193,6 @@ def main():
     if apple_link:
         reply += f"\napple: {apple_link}"
     reply += f"\nspotify: {spotify_link}"
-
-    reply += f"\n\ngithub: {GITHUB_LINK}"
     twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
 
 
