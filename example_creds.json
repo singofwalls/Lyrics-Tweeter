@@ -1,6 +1,6 @@
 {
     "spotify": {
-        "username": "<username>",
+        "usernames": ["<username>"],
         "scopes": "user-read-currently-playing",
         "client_id": "<client_id>",
         "client_secret": "<client_secret>",
@@ -9,12 +9,12 @@
     "genius": {
         "client access token": "<client access token>"
     },
-    "twitter": {
+    "twitter": [{
         "consumer key": "<consumer key>",
         "consumer secret": "<consumer secret>",
         "access token": "<access token>",
         "access token secret": "<access token secret>"
-    },
+    }],
     "lastfm": {
         "api key": "<api key>",
         "shared secret": "<shared secret>",

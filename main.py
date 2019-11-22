@@ -100,16 +100,17 @@ def run(usernum, creds):
     
     spotify = get_spotify(creds["spotify"], usernum)
     current_song = spotify.current_user_playing_track()
+    current_user = creds["spotify"]["usernames"][usernum]
 
     if isinstance(current_song, type(None)):
-        log("Not playing a song currently")
+        log(f"{current_user} not playing a song currently")
         return
 
     song_name = current_song["item"]["name"]
     artist_name = current_song["item"]["artists"][0]["name"]
     album_name = current_song["item"]["album"]["name"]
 
-    log(f"Playing {song_name} by {artist_name}")
+    log(f"{current_user} playing {song_name} by {artist_name}")
 
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
     song = genius.search_song(song_name, artist_name)
