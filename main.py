@@ -17,7 +17,7 @@ import re
 from functools import reduce
 
 
-CHANCE_TO_TWEET = 40
+CHANCE_TO_TWEET = 30
 CHANCE_TO_ADD_LINE = 2
 TWEET_LIMIT = 280
 
@@ -129,7 +129,7 @@ def run(usernum, creds):
         return
 
     if random.randrange(0, CHANCE_TO_TWEET):
-        # One in ten chance to tweet lyrics
+        # One in CHANCE_TO_TWEET chance to tweet lyrics
         log("Failed roll")
         return
 
@@ -187,7 +187,7 @@ def run(usernum, creds):
 
     apple_link = get_apple_link(query)
     genius_link = song.url
-    spotify_link = current_song["item"]["external_urls"]["spotify"]
+    spotify_link = current_song["item"]["external_urls"].get("spotify", "")
 
     lastfm_link = get_lastfm_link(artist_name, song_name, creds["lastfm"])
 
@@ -196,7 +196,8 @@ def run(usernum, creds):
         reply += f"\nlastfm: {lastfm_link}"
     if apple_link:
         reply += f"\napple: {apple_link}"
-    reply += f"\nspotify: {spotify_link}"
+    if spotify_link:
+        reply += f"\nspotify: {spotify_link}"
     twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
 
 
