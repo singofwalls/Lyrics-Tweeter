@@ -13,6 +13,7 @@ import datetime
 import traceback
 import os
 import re
+import string
 
 from functools import reduce
 
@@ -116,12 +117,15 @@ def remove_parens(name):
 
 def clean(name):
     """Remove potential discrepencies from the string."""
-    return remove_parens(name).lower().strip()
+    return "".join(list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), remove_parens(name)))).lower().strip()
 
 
 def match(song, other):
     """Determine whether a song matches the result"""
-    if clean(song[1]) != clean(other[1]):
+    artist_name = clean(song[1]) 
+    other_artist = clean(other[1])
+    if artist_name != other_artist:
+        log(f"{artist_name} != {other_artist}")
         return False
 
     song_name = clean(song[0])
@@ -129,6 +133,7 @@ def match(song, other):
     if song_name in other_name or other_name in song_name:
         return True
 
+    log(f"{song_name} does not match {other_name}")
     return False
 
 
