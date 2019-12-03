@@ -4,5 +4,5 @@
 .mypy*
 .cache*
 
-
+log.txt
 creds.json

@@ -17,8 +17,8 @@ import re
 from functools import reduce
 
 
-CHANCE_TO_TWEET = 30
-CHANCE_TO_ADD_LINE = 2
+CHANCE_TO_TWEET = 150
+CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
 
 LOG_FILE = "log.txt"
