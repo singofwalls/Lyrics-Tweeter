@@ -30,16 +30,20 @@ GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 20
-REPLAY_REDUCE_FACTOR = 4  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+REPLAY_REDUCE_FACTOR = (
+    4  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+)
 
 
 def get_lastfm_link(artist, track, l_creds):
     """Get a link to the song from last fm based on artist and name."""
     pass_hash = pylast.md5(l_creds["password"])
-    network = pylast.LastFMNetwork(api_key=l_creds["api key"], 
-                                   api_secret=l_creds["shared secret"], 
-                                   username=l_creds["username"], 
-                                   password_hash=pass_hash)
+    network = pylast.LastFMNetwork(
+        api_key=l_creds["api key"],
+        api_secret=l_creds["shared secret"],
+        username=l_creds["username"],
+        password_hash=pass_hash,
+    )
 
     song = network.get_track(artist, track)
     if isinstance(song, type(None)):
@@ -76,13 +80,17 @@ def get_spotify(s_creds, usernum):
         os.mkdir(cache_path)
     except FileExistsError:
         pass
+    except FileNotFoundError:
+        os.mkdir("cache")
+        os.mkdir(cache_path)
+
     token = spotipy.util.prompt_for_user_token(
         s_creds["usernames"][usernum],
         s_creds["scopes"],
         s_creds["client_id"],
         s_creds["client_secret"],
         s_creds["redirect_uri"],
-        cache_path + ".cache"
+        cache_path + ".cache",
     )
 
     return spotipy.Spotify(auth=token)
@@ -102,19 +110,20 @@ def get_twitter(t_creds):
 
 
 def run(usernum, creds):
-    
+
     spotify = get_spotify(creds["spotify"], usernum)
     current_song = spotify.current_user_playing_track()
     current_user = creds["spotify"]["usernames"][usernum]
 
-    if isinstance(current_song, type(None)):
+    if isinstance(current_song, type(None)) or not current_song["is_playing"]:
         log(f"{current_user} not playing a song currently")
         return
 
     song_name = current_song["item"]["name"]
     artist_name = current_song["item"]["artists"][0]["name"]
     album_name = current_song["item"]["album"]["name"]
-    song_label = f"{song_name}, {artist_name}"
+    progress = current_song["progress_ms"]
+    song_label = (song_name, artist_name, progress)
 
     log(f"{current_user} playing {song_name} by {artist_name}")
 
@@ -129,7 +138,16 @@ def run(usernum, creds):
         prev_songs_all[current_user] = []
 
     # Add current song
-    prev_songs = prev_songs_all[current_user]
+    prev_songs = list(map(tuple, prev_songs_all[current_user]))
+
+    replayed = bool(
+        prev_songs
+        and prev_songs[-1][:-1] == song_label[:-1]
+        and prev_songs[-1][-1] >= song_label[-1]
+    )
+    continued = bool(prev_songs) and prev_songs[-1][:-1] == song_label[:-1]
+    if continued and not replayed:
+        prev_songs = prev_songs[:-1]
     with open(PREV_SONGS, "w") as f:
         current_songs = prev_songs + [song_label]
         if len(current_songs) > MAX_PREV_SONGS:
@@ -153,7 +171,8 @@ def run(usernum, creds):
         log("No paragraphs")
         return
 
-    reduce_factor = prev_songs.count(song_label) * REPLAY_REDUCE_FACTOR
+    replays = list(map(lambda l: l[:-1], prev_songs)).count(song_label[:-1])
+    reduce_factor = max(replays * REPLAY_REDUCE_FACTOR, 1)
     if random.randrange(0, max(CHANCE_TO_TWEET // reduce_factor, 1)):
         # One in CHANCE_TO_TWEET chance to tweet lyrics
         log("Failed roll")
@@ -230,7 +249,6 @@ def run(usernum, creds):
     twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
 
 
-
 def main():
 
     with open(CREDS_FILE) as f:
@@ -241,16 +259,15 @@ def main():
         run(usernum, creds)
 
 
-
 def log(message):
     """Log to the log file."""
     # Halve log if greater than 1000 lines
     print(message)
 
-    
     with open(LOG_FILE, "a") as log:
-        log.write(datetime.datetime.now().strftime(
-            LOG_TIMESTAMP) + " " + message + "\n")
+        log.write(
+            datetime.datetime.now().strftime(LOG_TIMESTAMP) + " " + message + "\n"
+        )
 
     with open(LOG_FILE) as f:
         contents = f.read()
@@ -268,7 +285,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        tb = traceback.format_exception(etype=type(e), value=e,
-                                        tb=e.__traceback__)
+        tb = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
         log("ERROR\n" + "".join(tb))
         raise e
