@@ -125,6 +125,9 @@ def run(usernum, creds):
     except FileNotFoundError:
         prev_songs_all = {current_user: []}
 
+    if current_user not in prev_songs_all:
+        prev_songs_all[current_user] = []
+
     # Add current song
     prev_songs = prev_songs_all[current_user]
     with open(PREV_SONGS, "w") as f:
