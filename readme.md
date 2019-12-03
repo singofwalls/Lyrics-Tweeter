@@ -1,5 +1,5 @@
 # Lyrics Tweeter
-In use here: [@42Versificator](https://twitter.com/42Versificator)
+In use here: [@42Versificator](https://twitter.com/42Versificator), [@RVersificator](https://twitter.com/RVersificator)
 
 A twitter bot hosted on a raspberry pi which, every few minutes, checks if a song is being played on the authed Spotify account and, if a random roll is passed, tweets random lyrics from the song.
 
@@ -16,7 +16,9 @@ The bot should tweet around once per day if the average day sees 80 scrobbles (t
 
 In a sense, the bot is a bit of a roulette due to lyrics not being vetted and tweets having the potential to occur at any moment. But then, I suppose that's part of the appeal.
 
-I acknowledge the untidiness of the code. I originally intended for this to be a quick-and-dirty private repo but ultimately decided to go public.
+The likelihood of a tweet for a given song is exponentially increased if the song was already played recently.
+
+I acknowledge the untidiness of the code. I originally intended for this to be a quick-and-dirty private repo but ultimately decided to go public. I do not intend to maintain this repo.
 
 ## Setup
 To host your own, credentials must be obtained for [Spotify](https://developer.spotify.com/dashboard/applications), [Genius](https://genius.com/api-clients/new), [Twitter](https://developer.twitter.com/en/application/use-case), and [Last.fm](https://www.last.fm/api/account/create). These should be placed in a creds.json file as demonstrated in the [example_creds.json](example_creds.json), replacing everything between "<>." Python 3.6 (or perhaps greater) is necesary to run this code. [Get Python and Pip here](https://www.python.org/downloads/). The necessary libraries can be installed with pip using the [requirements.txt](requirements.txt) file. If you have not yet cloned this repo, do so using your VCS of choice ([git can be downloaded here](https://git-scm.com/downloads)).

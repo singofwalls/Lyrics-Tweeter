@@ -27,6 +27,11 @@ LOG_TIMESTAMP = "%b %d, %Y %I:%M:%S %p"
 
 GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 
+CREDS_FILE = "creds.json"
+PREV_SONGS = "previous_songs.json"
+MAX_PREV_SONGS = 20
+REPLAY_REDUCE_FACTOR = 4  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+
 
 def get_lastfm_link(artist, track, l_creds):
     """Get a link to the song from last fm based on artist and name."""
@@ -109,8 +114,25 @@ def run(usernum, creds):
     song_name = current_song["item"]["name"]
     artist_name = current_song["item"]["artists"][0]["name"]
     album_name = current_song["item"]["album"]["name"]
+    song_label = f"{song_name}, {artist_name}"
 
     log(f"{current_user} playing {song_name} by {artist_name}")
+
+    # Track previously played songs
+    try:
+        with open(PREV_SONGS) as f:
+            prev_songs_all = json.load(f)
+    except FileNotFoundError:
+        prev_songs_all = {current_user: []}
+
+    # Add current song
+    prev_songs = prev_songs_all[current_user]
+    with open(PREV_SONGS, "w") as f:
+        current_songs = prev_songs + [song_label]
+        if len(current_songs) > MAX_PREV_SONGS:
+            current_songs = current_songs[-MAX_PREV_SONGS:]
+        prev_songs_all[current_user] = current_songs
+        json.dump(prev_songs_all, f)
 
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
     song = genius.search_song(song_name, artist_name)
@@ -128,7 +150,8 @@ def run(usernum, creds):
         log("No paragraphs")
         return
 
-    if random.randrange(0, CHANCE_TO_TWEET):
+    reduce_factor = prev_songs.count(song_label) * REPLAY_REDUCE_FACTOR
+    if random.randrange(0, max(CHANCE_TO_TWEET // reduce_factor, 1)):
         # One in CHANCE_TO_TWEET chance to tweet lyrics
         log("Failed roll")
         return
@@ -175,6 +198,9 @@ def run(usernum, creds):
             selected_lines.append(next_line)
         break
 
+    if not selected_lines:
+        return
+
     status = "\n".join(selected_lines)
     log("Tweeting:\n" + status)
 
@@ -204,7 +230,7 @@ def run(usernum, creds):
 
 def main():
 
-    with open("creds.json") as f:
+    with open(CREDS_FILE) as f:
         creds = json.load(f)
 
     users = len(creds["spotify"]["usernames"])
