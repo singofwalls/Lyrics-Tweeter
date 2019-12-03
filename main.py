@@ -30,9 +30,9 @@ GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 
 CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
-MAX_PREV_SONGS = 20
+MAX_PREV_SONGS = 100
 REPLAY_REDUCE_FACTOR = (
-    4  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+    3  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 )
 
 
