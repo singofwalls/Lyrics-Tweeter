@@ -173,7 +173,13 @@ def run(usernum, creds):
 
     replays = list(map(lambda l: l[:-1], prev_songs)).count(song_label[:-1])
     reduce_factor = max(replays * REPLAY_REDUCE_FACTOR, 1)
-    if random.randrange(0, max(CHANCE_TO_TWEET // reduce_factor, 1)):
+    odds = max(CHANCE_TO_TWEET // reduce_factor, 1)
+    if replays:
+        log(
+            f"Song played {replays} times in last {MAX_PREV_SONGS} songs. "
+            f"Dividing {CHANCE_TO_TWEET} by {reduce_factor} to {odds}."
+        )
+    if random.randrange(0, odds):
         # One in CHANCE_TO_TWEET chance to tweet lyrics
         log("Failed roll")
         return
@@ -221,6 +227,7 @@ def run(usernum, creds):
         break
 
     if not selected_lines:
+        log("No lines fit within tweet.")
         return
 
     status = "\n".join(selected_lines)
