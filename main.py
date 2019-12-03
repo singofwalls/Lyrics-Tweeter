@@ -255,6 +255,12 @@ def run(usernum, creds):
         reply += f"\nspotify: {spotify_link}"
     twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
 
+    # Remove past replays of this song to reset odds in future
+    with open(PREV_SONGS, "w") as f:
+        current_songs = list(filter(lambda l: l[:-1] != song_label[:-1], current_songs))
+        prev_songs_all[current_user] = current_songs
+        json.dump(prev_songs_all, f)
+
 
 def main():
 
