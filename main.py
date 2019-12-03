@@ -48,7 +48,7 @@ def get_lastfm_link(artist, track, l_creds):
     song = network.get_track(artist, track)
     if isinstance(song, type(None)):
         log("Song not found on Lastfm trying remove parens")
-        song_search = re.sub("\([\w\W]*\)", "", track)
+        song_search = remove_parens(track)
         song = network.get_track(artist, track)
         if isinstance(song, type(None)):
             log(f"Song {song_search} by {artist} not found on Last.fm")
@@ -109,6 +109,29 @@ def get_twitter(t_creds):
     return api
 
 
+def remove_parens(name):
+    """Remove the parentheses from a song name."""
+    return re.sub("\([\w\W]*\)", "", name)
+
+
+def clean(name):
+    """Remove potential discrepencies from the string."""
+    return remove_parens(name).lower().strip()
+
+
+def match(song, other):
+    """Determine whether a song matches the result"""
+    if clean(song[1]) != clean(other[1]):
+        return False
+
+    song_name = clean(song[0])
+    other_name = clean(other[0])
+    if song_name in other_name or other_name in song_name:
+        return True
+
+    return False
+
+
 def run(usernum, creds):
 
     spotify = get_spotify(creds["spotify"], usernum)
@@ -156,14 +179,19 @@ def run(usernum, creds):
         json.dump(prev_songs_all, f)
 
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
-    song = genius.search_song(song_name, artist_name)
-    if isinstance(song, type(None)):
-        log("Song not found on Genius trying remove parens")
-        song_search = re.sub("\([\w\W]*\)", "", song_name)
+    song_search = song_name
+    for i in range(0, 2):
         song = genius.search_song(song_search, artist_name)
-        if isinstance(song, type(None)):
-            log(f"Song {song_search} by {artist_name} not found on Genius")
-            return
+        if isinstance(song, type(None)) or not match((song_search, artist_name), (song.title, song.artist)):
+            if i:
+                log(f"Song {song_search} by {artist_name} not found on Genius")
+                return
+            else:
+                log("Song not found on Genius trying remove parens")
+                song_search = remove_parens(song_search)
+        else:
+            break
+
 
     paragraphs = song.lyrics.split("\n\n")
 
@@ -237,7 +265,7 @@ def run(usernum, creds):
     tweet = twit.PostUpdate(status)
 
     query = " ".join((artist_name, song_name, album_name))
-    query = re.sub("\([\w\W]*\)", "", query)  # Remove stuff in parens
+    query = remove_parens(query)
     query = urllib.parse.quote_plus(query)
 
     apple_link = get_apple_link(query)
