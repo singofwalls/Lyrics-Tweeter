@@ -184,6 +184,7 @@ def run(usernum, creds):
         prev_songs_all[current_user] = current_songs
         json.dump(prev_songs_all, f)
     if same_play:
+        log("Already tried roll")
         # Only try once for each song
         return
 
@@ -268,7 +269,7 @@ def run(usernum, creds):
         return
 
     status = "\n".join(selected_lines)
-    log("Tweeting:\n" + status)
+    log("****TWEETING****:\n" + status)
 
     twit = get_twitter(creds["twitter"][usernum])
     tweet = twit.PostUpdate(status)
