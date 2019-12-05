@@ -49,16 +49,19 @@ def get_lastfm_link(artist, track, l_creds):
     song = network.get_track(artist, track)
     if isinstance(song, type(None)):
         log("Song not found on Lastfm trying remove parens")
-        song_search = remove_parens(track)
-        song = network.get_track(artist, track)
+        song_search = clean(track)
+        song = network.get_track(artist, song_search)
         if isinstance(song, type(None)):
             log(f"Song {song_search} by {artist} not found on Last.fm")
             return
     return song.get_url() + "/+lyrics"
 
 
-def get_apple_link(query):
+def get_apple_link(terms, cleaned=False):
     """Get a link to the song from Apple based on artist, name, and album."""
+
+    query = " ".join(terms)
+    query = urllib.parse.quote_plus(query)
 
     response = requests.get(f"https://itunes.apple.com/search?term={query}&limit=1")
     if not response.ok or not response.content:
@@ -67,6 +70,8 @@ def get_apple_link(query):
     content = json.loads(response.content)
     results = content["results"]
     if not results:
+        if not cleaned:
+            return get_apple_link((terms[0],) + tuple(map(clean, query[1:])), True)
         return ""
 
     url = results[0]["trackViewUrl"]
@@ -110,14 +115,14 @@ def get_twitter(t_creds):
     return api
 
 
-def remove_parens(name):
-    """Remove the parentheses from a song name."""
-    return re.sub("\([\w\W]*\)", "", name)
+def remove_extra(name):
+    """Remove the parentheses and hyphens from a song name."""
+    return re.sub("-[\S\s]*", "", re.sub("\([\w\W]*\)", "", name))
 
 
 def clean(name):
     """Remove potential discrepencies from the string."""
-    return "".join(list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), remove_parens(name)))).lower().strip()
+    return "".join(list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), remove_extra(name)))).lower().strip()
 
 
 def match(song, other):
@@ -197,8 +202,8 @@ def run(usernum, creds):
                 log(f"Song {song_search} by {artist_name} not found on Genius")
                 return
             else:
-                log("Song not found on Genius trying remove parens")
-                song_search = remove_parens(song_search)
+                log("Song not found on Genius trying cleaning")
+                song_search = clean(song_search)
         else:
             break
 
@@ -274,11 +279,7 @@ def run(usernum, creds):
     twit = get_twitter(creds["twitter"][usernum])
     tweet = twit.PostUpdate(status)
 
-    query = " ".join((artist_name, song_name, album_name))
-    query = remove_parens(query)
-    query = urllib.parse.quote_plus(query)
-
-    apple_link = get_apple_link(query)
+    apple_link = get_apple_link((artist_name, song_name, album_name))
     genius_link = song.url
     spotify_link = current_song["item"]["external_urls"].get("spotify", "")
 
