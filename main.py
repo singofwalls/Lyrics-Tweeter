@@ -32,7 +32,7 @@ CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 100
 REPLAY_REDUCE_FACTOR = (
-    1.2  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+    3  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 )
 
 
@@ -174,7 +174,8 @@ def run(usernum, creds):
         and prev_songs[-1][-1] >= song_label[-1]
     )
     continued = bool(prev_songs) and prev_songs[-1][:-1] == song_label[:-1]
-    if continued and not replayed:
+    same_play = continued and not replayed
+    if same_play:
         prev_songs = prev_songs[:-1]
     with open(PREV_SONGS, "w") as f:
         current_songs = prev_songs + [song_label]
@@ -182,6 +183,9 @@ def run(usernum, creds):
             current_songs = current_songs[-MAX_PREV_SONGS:]
         prev_songs_all[current_user] = current_songs
         json.dump(prev_songs_all, f)
+    if same_play:
+        # Only try once for each song
+        return
 
     genius = lyricsgenius.Genius(creds["genius"]["client access token"])
     song_search = song_name
