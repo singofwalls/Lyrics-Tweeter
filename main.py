@@ -205,6 +205,8 @@ def run(usernum, creds):
                 log("Song not found on Genius trying cleaning")
                 song_search = clean(song_search)
         else:
+            if i:
+                log(f"Found match for {song_search}")
             break
 
 
