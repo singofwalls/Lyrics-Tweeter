@@ -6,7 +6,7 @@ import twitter
 import pylast
 import requests
 import unidecode
-import textdistance
+from textdistance import levenshtein
 
 import json
 import random
@@ -36,8 +36,8 @@ MAX_PREV_SONGS = 100
 REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 
 # Closer to 1 == strings must match more closely to be considered a match
-REQUIRED_ARTIST_SCORE = 0.8
-REQUIRED_SONG_SCORE = 0.7
+REQUIRED_ARTIST_SCORE = 0.2
+REQUIRED_SONG_SCORE = 0.3
 
 EXCLUDED_GENIUS_TERMS = ["Songs That Reference Drugs"]
 
@@ -161,7 +161,7 @@ def clean(name):
 
 def distance(str1, str2):
     """Return the Needleman-Wunsch similarity between two strings."""
-    return textdistance.needleman_wunsch.normalized_similarity(str1, str2)
+    return levenshtein.normalized_distance(str1, str2)
 
 
 def match(song, other):
@@ -169,14 +169,14 @@ def match(song, other):
     artist_name = clean(song[1])
     other_artist = clean(other[1])
     artist_dist = distance(artist_name, other_artist)
-    if artist_dist < REQUIRED_ARTIST_SCORE:
+    if artist_dist > REQUIRED_ARTIST_SCORE:
         log(f"{artist_name} != {other_artist}: {artist_dist} < {REQUIRED_ARTIST_SCORE}")
         return False
 
     song_name = clean(song[0])
     other_name = clean(other[0])
     song_dist = distance(song_name, other_name)
-    if song_dist >= REQUIRED_SONG_SCORE or song_name in other_name or other_name in song_name:
+    if song_dist <= REQUIRED_SONG_SCORE or song_name in other_name or other_name in song_name:
         return True
 
     log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
