@@ -5,6 +5,7 @@ import spotipy.util
 import twitter
 import pylast
 import requests
+import unidecode
 
 import json
 import random
@@ -122,12 +123,18 @@ def remove_extra(name):
 
 def clean(name):
     """Remove potential discrepencies from the string."""
-    return "".join(list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), remove_extra(name)))).lower().strip()
+    name = remove_extra(name)
+    name = unidecode.unidecode(name)  # Remove diacritics
+    name = "".join(
+        list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), name))
+    )
+    name = name.lower().strip()
+    return name
 
 
 def match(song, other):
     """Determine whether a song matches the result"""
-    artist_name = clean(song[1]) 
+    artist_name = clean(song[1])
     other_artist = clean(other[1])
     if artist_name != other_artist:
         log(f"{artist_name} != {other_artist}")
@@ -197,7 +204,9 @@ def run(usernum, creds):
     song_search = song_name
     for i in range(0, 2):
         song = genius.search_song(song_search, artist_name)
-        if isinstance(song, type(None)) or not match((song_search, artist_name), (song.title, song.artist)):
+        if isinstance(song, type(None)) or not match(
+            (song_search, artist_name), (song.title, song.artist)
+        ):
             if i:
                 log(f"Song {song_search} by {artist_name} not found on Genius")
                 return
@@ -208,7 +217,6 @@ def run(usernum, creds):
             if i:
                 log(f"Found match for {song_search}")
             break
-
 
     paragraphs = song.lyrics.split("\n\n")
 
