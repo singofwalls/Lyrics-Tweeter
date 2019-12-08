@@ -32,7 +32,7 @@ CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 100
 REPLAY_REDUCE_FACTOR = (
-    1.2  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+    1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 )
 
 
