@@ -6,6 +6,7 @@ import twitter
 import pylast
 import requests
 import unidecode
+import textdistance
 
 import json
 import random
@@ -32,9 +33,13 @@ GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 100
-REPLAY_REDUCE_FACTOR = (
-    1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
-)
+REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+
+# Closer to 1 == strings must match more closely to be considered a match
+REQUIRED_ARTIST_SCORE = 0.8
+REQUIRED_SONG_SCORE = 0.7
+
+EXCLUDED_GENIUS_TERMS = ["Songs That Reference Drugs"]
 
 
 def get_lastfm_link(artist, track, l_creds):
@@ -77,6 +82,28 @@ def get_apple_link(terms, cleaned=False):
 
     url = results[0]["trackViewUrl"]
     return url
+
+
+def get_genius_song(song_name, artist_name, genius):
+    """Get the corresponding song from Genius."""
+    song_search = song_name
+    for i in range(0, 2):
+        song = genius.search_song(song_search, artist_name)
+        if isinstance(song, type(None)) or not match(
+            (song_search, artist_name), (song.title, song.artist)
+        ):
+            if i:
+                log(f"Song {song_search} by {artist_name} not found on Genius")
+                return
+            else:
+                log("Song not found on Genius trying cleaning")
+                song_search = clean(song_search)
+        else:
+            if i:
+                log(f"Found match for {song_search}")
+            break
+
+    return song
 
 
 def get_spotify(s_creds, usernum):
@@ -132,20 +159,27 @@ def clean(name):
     return name
 
 
+def distance(str1, str2):
+    """Return the Needleman-Wunsch similarity between two strings."""
+    return textdistance.needleman_wunsch.normalized_similarity(str1, str2)
+
+
 def match(song, other):
     """Determine whether a song matches the result"""
     artist_name = clean(song[1])
     other_artist = clean(other[1])
-    if artist_name != other_artist:
-        log(f"{artist_name} != {other_artist}")
+    artist_dist = distance(artist_name, other_artist)
+    if artist_dist < REQUIRED_ARTIST_SCORE:
+        log(f"{artist_name} != {other_artist}: {artist_dist} < {REQUIRED_ARTIST_SCORE}")
         return False
 
     song_name = clean(song[0])
     other_name = clean(other[0])
-    if song_name in other_name or other_name in song_name:
+    song_dist = distance(song_name, other_name)
+    if song_dist >= REQUIRED_SONG_SCORE or song_name in other_name or other_name in song_name:
         return True
 
-    log(f"{song_name} does not match {other_name}")
+    log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
     return False
 
 
@@ -200,23 +234,12 @@ def run(usernum, creds):
         # Only try once for each song
         return
 
-    genius = lyricsgenius.Genius(creds["genius"]["client access token"])
-    song_search = song_name
-    for i in range(0, 2):
-        song = genius.search_song(song_search, artist_name)
-        if isinstance(song, type(None)) or not match(
-            (song_search, artist_name), (song.title, song.artist)
-        ):
-            if i:
-                log(f"Song {song_search} by {artist_name} not found on Genius")
-                return
-            else:
-                log("Song not found on Genius trying cleaning")
-                song_search = clean(song_search)
-        else:
-            if i:
-                log(f"Found match for {song_search}")
-            break
+    genius = lyricsgenius.Genius(creds["genius"]["client access token"], excluded_terms=EXCLUDED_GENIUS_TERMS)
+    song = get_genius_song(song_name, artist_name, genius)
+
+    if isinstance(song, type(None)):
+        log("Song not found on Genius")
+        return
 
     paragraphs = song.lyrics.split("\n\n")
 
@@ -241,9 +264,10 @@ def run(usernum, creds):
     chosen_paragraphs = set()
     selected_lines = []
     while len(paragraphs) != len(chosen_paragraphs):
-        paragraph_num = random.choice(
-            list(set(range(0, len(paragraphs))) - chosen_paragraphs)
-        )
+        remaining_choices = list(set(range(0, len(paragraphs))) - chosen_paragraphs)
+        if not remaining_choices:
+            break
+        paragraph_num = random.choice(remaining_choices)
         paragraph = paragraphs[paragraph_num]
 
         lines = [line for line in paragraph.split("\n") if line and line[0] != "["]
