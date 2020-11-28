@@ -109,14 +109,6 @@ def get_genius_song(song_name, artist_name, genius):
 def get_spotify(s_creds, usernum):
     """Get the spotify object from which to make requests."""
     # Authorize Spotify
-    cache_path = f"cache/{usernum}/"
-    try:
-        os.mkdir(cache_path)
-    except FileExistsError:
-        pass
-    except FileNotFoundError:
-        os.mkdir("cache")
-        os.mkdir(cache_path)
 
     token = spotipy.util.prompt_for_user_token(
         s_creds["usernames"][usernum],
@@ -124,7 +116,6 @@ def get_spotify(s_creds, usernum):
         s_creds["client_id"],
         s_creds["client_secret"],
         s_creds["redirect_uri"],
-        cache_path + ".cache",
     )
 
     return spotipy.Spotify(auth=token)
