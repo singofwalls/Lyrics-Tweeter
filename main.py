@@ -23,6 +23,7 @@ from functools import reduce
 CHANCE_TO_TWEET = 150
 CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
+NO_RETRY = True  # Do not retry a roll if on the same play
 
 LOG_FILE = "log.txt"
 LOG_SIZE = 10000
@@ -220,7 +221,7 @@ def run(usernum, creds):
             current_songs = current_songs[-MAX_PREV_SONGS:]
         prev_songs_all[current_user] = current_songs
         json.dump(prev_songs_all, f)
-    if same_play:
+    if same_play and NO_RETRY:
         log("Already tried roll")
         # Only try once for each song
         return
