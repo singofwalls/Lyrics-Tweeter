@@ -16,14 +16,16 @@ import traceback
 import os
 import re
 import string
+import sys
 
 from functools import reduce
 
 
-CHANCE_TO_TWEET = 150
+CHANCE_TO_TWEET = 100
 CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
+FORCE = False  # Force a tweet regardless of odds or retries
 
 LOG_FILE = "log.txt"
 LOG_SIZE = 10000
@@ -221,7 +223,7 @@ def run(usernum, creds):
             current_songs = current_songs[-MAX_PREV_SONGS:]
         prev_songs_all[current_user] = current_songs
         json.dump(prev_songs_all, f)
-    if same_play and NO_RETRY:
+    if same_play and NO_RETRY and not FORCE:
         log("Already tried roll")
         # Only try once for each song
         return
@@ -247,7 +249,7 @@ def run(usernum, creds):
             f"Song played {replays} times in last {MAX_PREV_SONGS} songs. "
             f"Dividing {CHANCE_TO_TWEET} by {reduce_factor} to {odds}."
         )
-    if random.randrange(0, odds):
+    if random.randrange(0, odds) and not FORCE:
         # One in CHANCE_TO_TWEET chance to tweet lyrics
         log("Failed roll")
         return
@@ -361,6 +363,9 @@ def log(message):
 
 if __name__ == "__main__":
     try:
+        if "force" in sys.argv:
+            FORCE = True
+            log("FORCING")
         main()
     except Exception as e:
         tb = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
