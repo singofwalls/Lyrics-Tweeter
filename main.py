@@ -21,6 +21,7 @@ import sys
 from functools import reduce
 
 
+DONT_CONFIRM = True  # Do not ask user before sending tweet if True
 CHANCE_TO_TWEET = 100
 CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
@@ -170,7 +171,11 @@ def match(song, other):
     song_name = clean(song[0])
     other_name = clean(other[0])
     song_dist = distance(song_name, other_name)
-    if song_dist <= REQUIRED_SONG_SCORE or song_name in other_name or other_name in song_name:
+    if (
+        song_dist <= REQUIRED_SONG_SCORE
+        or song_name in other_name
+        or other_name in song_name
+    ):
         return True
 
     log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
@@ -183,7 +188,11 @@ def run(usernum, creds):
     current_song = spotify.current_user_playing_track()
     current_user = creds["spotify"]["usernames"][usernum]
 
-    if isinstance(current_song, type(None)) or not current_song["is_playing"]:
+    if (
+        isinstance(current_song, type(None))
+        or not current_song["is_playing"]
+        or not current_song["item"]  # Happens with podcasts
+    ):
         log(f"{current_user} not playing a song currently")
         return
 
@@ -228,7 +237,9 @@ def run(usernum, creds):
         # Only try once for each song
         return
 
-    genius = lyricsgenius.Genius(creds["genius"]["client access token"], excluded_terms=EXCLUDED_GENIUS_TERMS)
+    genius = lyricsgenius.Genius(
+        creds["genius"]["client access token"], excluded_terms=EXCLUDED_GENIUS_TERMS
+    )
     song = get_genius_song(song_name, artist_name, genius)
 
     if isinstance(song, type(None)):
@@ -301,6 +312,8 @@ def run(usernum, creds):
         log("No lines fit within tweet.")
         return
 
+    if not (DONT_CONFIRM or input("Send Tweet? [Yy]").lower() == "y"):
+        return
     status = "\n".join(selected_lines)
     log("****TWEETING****:\n" + status)
 
