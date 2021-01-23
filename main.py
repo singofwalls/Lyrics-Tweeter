@@ -7,18 +7,16 @@ import pylast
 import requests
 import unidecode
 from textdistance import levenshtein
+from better_profanity import profanity
 
 import json
 import random
 import urllib
 import datetime
 import traceback
-import os
 import re
 import string
 import sys
-
-from functools import reduce
 
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
@@ -27,6 +25,8 @@ CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
 FORCE = False  # Force a tweet regardless of odds or retries
+FILTER_SLURS = True  # Do not tweet lyrics which contain blacklisted words
+BLACKLIST_PATH = "./words_blacklist.txt"
 
 LOG_FILE = "log.txt"
 LOG_SIZE = 10000
@@ -315,6 +315,13 @@ def run(usernum, creds):
     if not (DONT_CONFIRM or input("Send Tweet? [Yy]").lower() == "y"):
         return
     status = "\n".join(selected_lines)
+
+    if FILTER_SLURS:
+       profanity.load_censor_words_from_file(BLACKLIST_PATH)
+       if profanity.contains_profanity(status):
+           log("Skipping tweet due to profanity:\n" + status)
+           return
+
     log("****TWEETING****:\n" + status)
 
     twit = get_twitter(creds["twitter"][usernum])
