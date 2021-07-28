@@ -20,7 +20,7 @@ import sys
 
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
-CHANCE_TO_TWEET = 100
+CHANCE_TO_TWEET = 120
 CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
@@ -96,17 +96,17 @@ def get_genius_song(song_name, artist_name, genius):
     for i in range(0, 2):
         song = genius.search_song(song_search, artist_name)
         if isinstance(song, type(None)) or not match(
-            (song_search, artist_name), (song.title, song.artist)
+	            (song_search, artist_name), (song.title, song.artist)
         ):
             if i:
-                log(f"Song {song_search} by {artist_name} not found on Genius")
+                log(f"Song '{song_search}' by '{artist_name}' not found on Genius")
                 return
             else:
-                log("Song not found on Genius trying cleaning")
+                log(f"Song '{song_search}' by '{artist_name}' not found on Genius trying cleaning")
                 song_search = clean(song_search)
         else:
             if i:
-                log(f"Found match for {song_search}")
+                log(f"Found match for '{song_search}' by '{artist_name}'")
             break
 
     return song
@@ -286,9 +286,11 @@ def run(usernum, creds):
             chosen_paragraphs.add(paragraph_num)
 
         selected = lines[start]
+        shortened = False
         long_sentence = False
         while len(selected) > TWEET_LIMIT:
             if "." in selected:
+                shortened = True
                 selected = ".".join(selected.split(".")[:-1])
             else:
                 long_sentence = True
@@ -298,7 +300,7 @@ def run(usernum, creds):
             continue
 
         selected_lines = [selected]
-        while random.randrange(0, CHANCE_TO_ADD_LINE):
+        while random.randrange(0, CHANCE_TO_ADD_LINE) and not shortened:
             next_line_num = start + len(selected_lines)
             if next_line_num >= len(lines):
                 break
