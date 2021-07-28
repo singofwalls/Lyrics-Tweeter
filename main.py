@@ -44,6 +44,8 @@ REQUIRED_ARTIST_SCORE = 0.2
 REQUIRED_SONG_SCORE = 0.3
 
 EXCLUDED_GENIUS_TERMS = ["Songs That Reference Drugs"]
+EXTRANEOUS_TEXT = "EmbedShare URLCopyEmbedCopy"
+
 
 
 def get_lastfm_link(artist, track, l_creds):
@@ -307,6 +309,9 @@ def run(usernum, creds):
                 break
             selected_lines.append(next_line)
         break
+
+    if selected_lines[-1].endswith(EXTRANEOUS_TEXT):
+        selected_lines[-1] = selected_lines[-1][:selected_lines[-1].index(EXTRANEOUS_TEXT)]
 
     if not selected_lines:
         log("No lines fit within tweet.")
