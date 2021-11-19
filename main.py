@@ -187,7 +187,11 @@ def match(song, other):
 def run(usernum, creds):
 
     spotify = get_spotify(creds["spotify"], usernum)
-    current_song = spotify.current_user_playing_track()
+    try:
+        current_song = spotify.current_user_playing_track()
+    except requests.exceptions.ConnectionError:
+        log("Could not connect to network")
+        return
     current_user = creds["spotify"]["usernames"][usernum]
 
     if (
