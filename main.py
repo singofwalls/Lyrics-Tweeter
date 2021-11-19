@@ -20,7 +20,7 @@ import sys
 
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
-CHANCE_TO_TWEET = 120
+CHANCE_TO_TWEET = 180
 CHANCE_TO_ADD_LINE = 3
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
@@ -36,8 +36,8 @@ GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 
 CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
-MAX_PREV_SONGS = 100
-REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+MAX_PREV_SONGS = 300
+REPLAY_REDUCE_FACTOR = 1.15  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 
 # Closer to 1 == strings must match more closely to be considered a match
 REQUIRED_ARTIST_SCORE = 0.2
@@ -281,6 +281,7 @@ def run(usernum, creds):
         start = random.choice(
             list(set(range(0, len(lines))) - chosen_lines[paragraph_num])
         )
+
         chosen_lines[paragraph_num].add(start)
         if len(lines) == len(chosen_lines[paragraph_num]):
             chosen_paragraphs.add(paragraph_num)
@@ -319,8 +320,6 @@ def run(usernum, creds):
         log("No lines fit within tweet.")
         return
 
-    if not (DONT_CONFIRM or input("Send Tweet? [Yy]").lower() == "y"):
-        return
     status = "\n".join(selected_lines)
 
     if FILTER_SLURS:
@@ -329,7 +328,12 @@ def run(usernum, creds):
            log("Skipping tweet due to profanity:\n" + status)
            return
 
+
     log("****TWEETING****:\n" + status)
+
+    if not (DONT_CONFIRM or input("Send Tweet? [Yy]").lower() == "y"):
+        log("Cancelled by user")
+        return
 
     twit = get_twitter(creds["twitter"][usernum])
     tweet = twit.PostUpdate(status)
