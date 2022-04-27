@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!.venv/bin/python
 import lyricsgenius
 import spotipy
 import spotipy.util
@@ -37,7 +37,7 @@ GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 300
-REPLAY_REDUCE_FACTOR = 1.15  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+REPLAY_REDUCE_FACTOR = 1.2  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 
 # Closer to 1 == strings must match more closely to be considered a match
 REQUIRED_ARTIST_SCORE = 0.2
@@ -312,7 +312,7 @@ def run(usernum, creds):
 
             next_line = lines[next_line_num]
             current_len = len("\n".join(selected_lines))
-            if current_len + len(next_line) > TWEET_LIMIT:
+            if current_len + len(next_line) + 1 > TWEET_LIMIT:
                 break
             selected_lines.append(next_line)
         break
