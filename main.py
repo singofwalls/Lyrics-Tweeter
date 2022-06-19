@@ -1,4 +1,4 @@
-#!.venv/bin/python
+#!/usr/bin/python
 import lyricsgenius
 import spotipy
 import spotipy.util
@@ -21,7 +21,7 @@ import sys
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
 CHANCE_TO_TWEET = 180
-CHANCE_TO_ADD_LINE = 3
+CHANCE_TO_ADD_LINE = 4
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
 FORCE = False  # Force a tweet regardless of odds or retries
@@ -37,7 +37,7 @@ GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
 CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 300
-REPLAY_REDUCE_FACTOR = 1.2  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
+REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
 
 # Closer to 1 == strings must match more closely to be considered a match
 REQUIRED_ARTIST_SCORE = 0.2
