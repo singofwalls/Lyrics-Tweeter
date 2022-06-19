@@ -86,7 +86,7 @@ python-debian===0.1.36ubuntu1
 python-poppler-qt5==0.24.2
 pytz==2022.1
 PyYAML==5.3.1
-reportlab==3.5.34
+reportlab==3.5.55
 requests==2.27.1
 requests-toolbelt==0.9.1
 requests-unixsocket==0.2.0
