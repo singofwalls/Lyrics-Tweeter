@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/reece/code/Lyrics-Tweeter/.venv/bin/python
 import lyricsgenius
 import spotipy
 import spotipy.util
@@ -20,7 +20,7 @@ import sys
 
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
-CHANCE_TO_TWEET = 180
+CHANCE_TO_TWEET = 120
 CHANCE_TO_ADD_LINE = 4
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
