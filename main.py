@@ -199,7 +199,7 @@ def run(usernum, creds):
         or not current_song["is_playing"]
         or not current_song["item"]  # Happens with podcasts
     ):
-        log(f"{current_user} not playing a song currently")
+        # log(f"{current_user} not playing a song currently")
         return
 
     song_name = current_song["item"]["name"]
@@ -266,9 +266,9 @@ def run(usernum, creds):
             f"Song played {replays} times in last {MAX_PREV_SONGS} songs. "
             f"Dividing {CHANCE_TO_TWEET} by {reduce_factor} to {odds}."
         )
-    if random.randrange(0, odds) and not FORCE:
+    if (roll := random.randrange(0, odds)) and not FORCE:
         # One in CHANCE_TO_TWEET chance to tweet lyrics
-        log("Failed roll")
+        log(f"Failed roll: {roll} > 0")
         return
 
     chosen_lines = [set()] * len(paragraphs)
@@ -403,6 +403,6 @@ if __name__ == "__main__":
             log("FORCING")
         main()
     except Exception as e:
-        tb = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
-        log("ERROR\n" + "".join(tb))
+        tb = traceback.format_exc()
+        log("!! ERROR\n" + "".join(tb))
         raise e
