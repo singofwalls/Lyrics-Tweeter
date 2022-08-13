@@ -258,6 +258,9 @@ def run(usernum, creds):
         log("No paragraphs")
         return
 
+    if paragraphs[0].lower().startswith(song.title.lower() + " lyrics"):
+        paragraphs[0] = paragraphs[0][len(song.title + " lyrics"):]
+
     replays = list(map(lambda l: l[:-1], prev_songs)).count(song_label[:-1])
     reduce_factor = max(replays * REPLAY_REDUCE_FACTOR, 1)
     odds = max(CHANCE_TO_TWEET // reduce_factor, 1)
