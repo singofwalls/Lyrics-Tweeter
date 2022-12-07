@@ -20,7 +20,7 @@ import sys
 
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
-CHANCE_TO_TWEET = 120
+CHANCE_TO_TWEET = 200
 CHANCE_TO_ADD_LINE = 4
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
@@ -44,7 +44,7 @@ REQUIRED_ARTIST_SCORE = 0.2
 REQUIRED_SONG_SCORE = 0.3
 
 EXCLUDED_GENIUS_TERMS = ["Songs That Reference Drugs"]
-EXTRANEOUS_TEXT = "EmbedShare URLCopyEmbedCopy"
+EXTRANEOUS_TEXT = ["1Embed", "EmbedShare URLCopyEmbedCopy", "You might also like", r"See $BAND$ Live", "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics"]
 
 
 
@@ -142,7 +142,7 @@ def get_twitter(t_creds):
 
 def remove_extra(name):
     """Remove the parentheses and hyphens from a song name."""
-    return re.sub("-[\S\s]*", "", re.sub("\([\w\W]*\)", "", name))
+    return re.sub(r"-[\S\s]*", "", re.sub(r"\([\w\W]*\)", "", name))
 
 
 def clean(name):
@@ -182,6 +182,22 @@ def match(song, other):
 
     log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
     return False
+
+
+def clean_paragraphs(paragraphs, artist_name, song_name):
+    """Remove extraneous lines of text from paragraphs"""
+    clean_paragraphs = []
+
+    for paragraph in paragraphs:
+        for extraneous_pattern in EXTRANEOUS_TEXT:
+            extraneous_pattern = extraneous_pattern.replace("$BAND$", re.escape(artist_name))
+            extraneous_pattern = extraneous_pattern.replace("$SONG$", re.escape(song_name))
+
+            paragraph = re.sub(extraneous_pattern, "", paragraph, flags=re.IGNORECASE)
+
+        clean_paragraphs.append(paragraph)
+
+    return clean_paragraphs
 
 
 def run(usernum, creds):
@@ -258,8 +274,7 @@ def run(usernum, creds):
         log("No paragraphs")
         return
 
-    if paragraphs[0].lower().startswith(song.title.lower() + " lyrics"):
-        paragraphs[0] = paragraphs[0][len(song.title + " lyrics"):]
+    paragraphs = clean_paragraphs(paragraphs, artist_name, song_name)
 
     replays = list(map(lambda l: l[:-1], prev_songs)).count(song_label[:-1])
     reduce_factor = max(replays * REPLAY_REDUCE_FACTOR, 1)
@@ -320,8 +335,6 @@ def run(usernum, creds):
             selected_lines.append(next_line)
         break
 
-    if selected_lines[-1].endswith(EXTRANEOUS_TEXT):
-        selected_lines[-1] = selected_lines[-1][:selected_lines[-1].index(EXTRANEOUS_TEXT)]
 
     if not selected_lines:
         log("No lines fit within tweet.")
