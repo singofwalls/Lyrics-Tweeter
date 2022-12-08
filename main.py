@@ -44,8 +44,13 @@ REQUIRED_ARTIST_SCORE = 0.2
 REQUIRED_SONG_SCORE = 0.3
 
 EXCLUDED_GENIUS_TERMS = ["Songs That Reference Drugs"]
-EXTRANEOUS_TEXT = ["1Embed", "EmbedShare URLCopyEmbedCopy", "You might also like", r"See $BAND$ Live", "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics"]
-
+EXTRANEOUS_TEXT = ["Translations.+\n", r"\[[a-zA-Z]+\]\n",
+# TODO[reece]: Do not match to end of line for the translations substitution
+# Either use a list of langauges to match with
+# Or find or make a pull request to remove translation info from the HTML
+                    "1Embed", "EmbedShare URLCopyEmbedCopy",
+                    "You might also like", r"See $BAND$ Live",
+                    "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics"]
 
 
 def get_lastfm_link(artist, track, l_creds):
