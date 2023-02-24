@@ -20,8 +20,9 @@ import sys
 
 
 DONT_CONFIRM = True  # Do not ask user before sending tweet if True
-CHANCE_TO_TWEET = 200
-CHANCE_TO_ADD_LINE = 4
+CHANCE_TO_TWEET = 120  # 1 in x chance to tweet when ran
+CHANCE_TO_ADD_LINE = 4  # 1 out of x chance to not add the next line
+CHANCE_TO_ADD_FIRST_LINE = 6  # 1 out of x chance to not add a second line
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
 FORCE = False  # Force a tweet regardless of odds or retries
@@ -29,7 +30,7 @@ FILTER_SLURS = True  # Do not tweet lyrics which contain blacklisted words
 BLACKLIST_PATH = "./words_blacklist.txt"
 
 LOG_FILE = "log.txt"
-LOG_SIZE = 10000
+LOG_SIZE = 10000  # Trims log when greater than this many lines
 LOG_TIMESTAMP = "%b %d, %Y %I:%M:%S %p"
 
 GITHUB_LINK = "https://github.com/singofwalls/Lyrics-Tweeter"
@@ -48,7 +49,7 @@ EXTRANEOUS_TEXT = ["Translations.+\n", r"\[[a-zA-Z]+\]\n",
 # TODO[reece]: Do not match to end of line for the translations substitution
 # Either use a list of langauges to match with
 # Or find or make a pull request to remove translation info from the HTML
-                    "1Embed", "EmbedShare URLCopyEmbedCopy",
+                    "1Embed", "EmbedShare URLCopyEmbedCopy", "Embed$",
                     "You might also like", r"See $BAND$ Live",
                     "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics"]
 
@@ -328,7 +329,7 @@ def run(usernum, creds):
             continue
 
         selected_lines = [selected]
-        while random.randrange(0, CHANCE_TO_ADD_LINE) and not shortened:
+        while random.randrange(0, CHANCE_TO_ADD_LINE if len(selected_lines) != 1 else CHANCE_TO_ADD_FIRST_LINE) and not shortened:
             next_line_num = start + len(selected_lines)
             if next_line_num >= len(lines):
                 break
@@ -397,7 +398,7 @@ def main():
 
 def log(message):
     """Log to the log file."""
-    # Halve log if greater than 1000 lines
+
     print(message)
 
     with open(LOG_FILE, "a") as log:
@@ -405,16 +406,18 @@ def log(message):
             datetime.datetime.now().strftime(LOG_TIMESTAMP) + " " + message + "\n"
         )
 
+    # Remove the oldest lines if greater than LOG_SIZE
     with open(LOG_FILE) as f:
         contents = f.read()
-        lines_num = contents.count("\n")
-        if lines_num > LOG_SIZE:
-            lines = contents.split("\n")
-            line_index = lines_num - LOG_SIZE
-            lines = lines[line_index:]
 
-            with open(LOG_FILE, "w") as f:
-                f.write("\n".join(lines))
+    lines_num = contents.count("\n")
+    if lines_num > LOG_SIZE:
+        lines = contents.split("\n")
+        line_index = lines_num - LOG_SIZE
+        lines = lines[line_index:]
+
+        with open(LOG_FILE, "w") as f:
+            f.write("\n".join(lines))
 
 
 if __name__ == "__main__":
