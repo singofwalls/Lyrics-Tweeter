@@ -49,7 +49,7 @@ EXTRANEOUS_TEXT = ["Translations.+\n", r"\[[a-zA-Z]+\]\n",
 # TODO[reece]: Do not match to end of line for the translations substitution
 # Either use a list of langauges to match with
 # Or find or make a pull request to remove translation info from the HTML
-                    "1Embed", "EmbedShare URLCopyEmbedCopy", "Embed$",
+                    "[0-9]+Embed", "EmbedShare URLCopyEmbedCopy", "Embed$",
                     "You might also like", r"See $BAND$ Live",
                     "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics"]
 
