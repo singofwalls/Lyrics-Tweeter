@@ -2,7 +2,7 @@
 import lyricsgenius
 import spotipy
 import spotipy.util
-import twitter
+import tweepy
 import pylast
 import requests
 import unidecode
@@ -25,7 +25,7 @@ CHANCE_TO_ADD_LINE = 4  # 1 out of x chance to not add the next line
 CHANCE_TO_ADD_FIRST_LINE = 6  # 1 out of x chance to not add a second line
 TWEET_LIMIT = 280
 NO_RETRY = True  # Do not retry a roll if on the same play
-FORCE = False  # Force a tweet regardless of odds or retries
+FORCE = True  # Force a tweet regardless of odds or retries
 FILTER_SLURS = True  # Do not tweet lyrics which contain blacklisted words
 BLACKLIST_PATH = "./words_blacklist.txt"
 
@@ -136,14 +136,14 @@ def get_spotify(s_creds, usernum):
 def get_twitter(t_creds):
     """Get the twitter object from which to make requests."""
     # Authorize Twitter
-    api = twitter.Api(
+    client = tweepy.Client(
         t_creds["consumer key"],
         t_creds["consumer secret"],
         t_creds["access token"],
         t_creds["access token secret"],
     )
 
-    return api
+    return client
 
 
 def remove_extra(name):
@@ -362,7 +362,7 @@ def run(usernum, creds):
         return
 
     twit = get_twitter(creds["twitter"][usernum])
-    tweet = twit.PostUpdate(status)
+    tweet = twit.create_tweet(text=status)
 
     apple_link = get_apple_link((artist_name, song_name, album_name))
     genius_link = song.url
@@ -377,7 +377,7 @@ def run(usernum, creds):
         reply += f"\napple: {apple_link}"
     if spotify_link:
         reply += f"\nspotify: {spotify_link}"
-    twit.PostUpdate(reply, in_reply_to_status_id=tweet.id)
+    twit.create_tweet(text=reply, in_reply_to_tweet_id=tweet.json()["id"])
 
     # Remove past replays of this song to reset odds in future
     with open(PREV_SONGS, "w") as f:
