@@ -51,7 +51,8 @@ EXTRANEOUS_TEXT = ["Translations.+\n", r"\[[a-zA-Z]+\]\n",
 # Or find or make a pull request to remove translation info from the HTML
                     "[0-9]+Embed", "EmbedShare URLCopyEmbedCopy", "Embed$",
                     "You might also like", r"See $BAND$ Live",
-                    "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics"]
+                    "Get tickets as low as $[0-9]+", r"$SONG$ Lyrics",
+                    "[0-9]+ Contributors"]
 
 
 def get_lastfm_link(artist, track, l_creds):
