@@ -1,4 +1,4 @@
-#!/home/reece/code/Lyrics-Tweeter/.venv/bin/python
+#!./.venv/bin/python
 import lyricsgenius
 import spotipy
 import spotipy.util
@@ -8,6 +8,7 @@ import requests
 import unidecode
 from textdistance import levenshtein
 from better_profanity import profanity
+from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS
 
 import json
 import random
@@ -43,16 +44,6 @@ REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously 
 # Closer to 1 == strings must match more closely to be considered a match
 REQUIRED_ARTIST_SCORE = 0.2
 REQUIRED_SONG_SCORE = 0.3
-
-EXCLUDED_GENIUS_TERMS = ["Songs That Reference Drugs"]
-EXTRANEOUS_TEXT = ["Translations.+\n", r"\[[a-zA-Z]+\]\n",
-# TODO[reece]: Do not match to end of line for the translations substitution
-# Either use a list of langauges to match with
-# Or find or make a pull request to remove translation info from the HTML
-                    "[0-9]+Embed", "EmbedShare URLCopyEmbedCopy", "Embed$",
-                    "You might also like", r"See $BAND$ Live",
-                    r"Get tickets as low as \$[0-9]+", r"$SONG$ Lyrics",
-                    "[0-9]+ Contributors"]
 
 
 def get_lastfm_link(artist, track, l_creds):
@@ -189,22 +180,6 @@ def match(song, other):
 
     log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
     return False
-
-
-def clean_paragraphs(paragraphs, artist_name, song_name):
-    """Remove extraneous lines of text from paragraphs"""
-    clean_paragraphs = []
-
-    for paragraph in paragraphs:
-        for extraneous_pattern in EXTRANEOUS_TEXT:
-            extraneous_pattern = extraneous_pattern.replace("$BAND$", re.escape(artist_name))
-            extraneous_pattern = extraneous_pattern.replace("$SONG$", re.escape(song_name))
-
-            paragraph = re.sub(extraneous_pattern, "", paragraph, flags=re.IGNORECASE)
-
-        clean_paragraphs.append(paragraph)
-
-    return clean_paragraphs
 
 
 def run(usernum, creds):

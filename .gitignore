@@ -2,6 +2,7 @@
 .vscode
 .venv
 .mypy*
+__pycache__
 .cache*
 
 log.txt
