@@ -5,18 +5,14 @@ import spotipy.util
 import tweepy
 import pylast
 import requests
-import unidecode
-from textdistance import levenshtein
 from better_profanity import profanity
-from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS
+from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS, clean, match
 
 import json
 import random
 import urllib
 import datetime
 import traceback
-import re
-import string
 import sys
 
 
@@ -40,10 +36,6 @@ CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 300
 REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
-
-# Closer to 1 == strings must match more closely to be considered a match
-REQUIRED_ARTIST_SCORE = 0.2
-REQUIRED_SONG_SCORE = 0.3
 
 
 def get_lastfm_link(artist, track, l_creds):
@@ -136,50 +128,6 @@ def get_twitter(t_creds):
     )
 
     return client
-
-
-def remove_extra(name):
-    """Remove the parentheses and hyphens from a song name."""
-    return re.sub(r"-[\S\s]*", "", re.sub(r"\([\w\W]*\)", "", name))
-
-
-def clean(name):
-    """Remove potential discrepencies from the string."""
-    name = remove_extra(name)
-    name = unidecode.unidecode(name)  # Remove diacritics
-    name = "".join(
-        list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), name))
-    )
-    name = name.lower().strip()
-    return name
-
-
-def distance(str1, str2):
-    """Return the Needleman-Wunsch similarity between two strings."""
-    return levenshtein.normalized_distance(str1, str2)
-
-
-def match(song, other):
-    """Determine whether a song matches the result"""
-    artist_name = clean(song[1])
-    other_artist = clean(other[1])
-    artist_dist = distance(artist_name, other_artist)
-    if artist_dist > REQUIRED_ARTIST_SCORE:
-        log(f"{artist_name} != {other_artist}: {artist_dist} < {REQUIRED_ARTIST_SCORE}")
-        return False
-
-    song_name = clean(song[0])
-    other_name = clean(other[0])
-    song_dist = distance(song_name, other_name)
-    if (
-        song_dist <= REQUIRED_SONG_SCORE
-        or song_name in other_name
-        or other_name in song_name
-    ):
-        return True
-
-    log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
-    return False
 
 
 def run(usernum, creds):
