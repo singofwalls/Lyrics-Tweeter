@@ -16,7 +16,7 @@ EXTRANEOUS_TEXT = ["Translations.+\n", r"\[[a-zA-Z]+\]\n",
                     "[0-9]+Embed", "EmbedShare URLCopyEmbedCopy", "Embed$",
                     "You might also like", r"See $BAND$ Live",
                     r"Get tickets as low as \$[0-9]+", r"$SONG$ Lyrics",
-                    "[0-9]+ Contributors"]
+                    "[0-9]+ Contributors?"]
 
 
 def clean_paragraphs(paragraphs, artist_name, song_name):
