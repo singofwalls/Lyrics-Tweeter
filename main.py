@@ -6,7 +6,7 @@ import tweepy
 import pylast
 import requests
 from better_profanity import profanity
-from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS, clean, match
+from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS, clean, match, get_genius_song
 
 import json
 import random
@@ -78,28 +78,6 @@ def get_apple_link(terms, cleaned=False):
 
     url = results[0]["trackViewUrl"]
     return url
-
-
-def get_genius_song(song_name, artist_name, genius):
-    """Get the corresponding song from Genius."""
-    song_search = song_name
-    for i in range(0, 2):
-        song = genius.search_song(song_search, artist_name)
-        if isinstance(song, type(None)) or not match(
-	            (song_search, artist_name), (song.title, song.artist)
-        ):
-            if i:
-                log(f"Song '{song_search}' by '{artist_name}' not found on Genius")
-                return
-            else:
-                log(f"Song '{song_search}' by '{artist_name}' not found on Genius trying cleaning")
-                song_search = clean(song_search)
-        else:
-            if i:
-                log(f"Found match for '{song_search}' by '{artist_name}'")
-            break
-
-    return song
 
 
 def get_spotify(s_creds, usernum):
@@ -192,7 +170,7 @@ def run(usernum, creds):
     genius = lyricsgenius.Genius(
         creds["genius"]["client access token"], excluded_terms=EXCLUDED_GENIUS_TERMS
     )
-    song = get_genius_song(song_name, artist_name, genius)
+    song = get_genius_song(song_name, artist_name, genius, log)
 
     if isinstance(song, type(None)):
         log("Song not found on Genius")

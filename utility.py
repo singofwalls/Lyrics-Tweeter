@@ -37,7 +37,7 @@ def clean_paragraphs(paragraphs, artist_name, song_name):
 
 def distance(a: str, b: str):
     """Get the distance ratio between two strings."""
-    return SequenceMatcher(None, a, b).ratio()
+    return 1 - SequenceMatcher(None, a, b).ratio()
 
 
 def remove_extra(name):
@@ -79,3 +79,28 @@ def match(song, other, log=None):
     if log:
         log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
     return False
+
+
+def get_genius_song(song_name, artist_name, genius, log=None):
+    """Get the corresponding song from Genius."""
+    song_search = song_name
+    for i in range(0, 2):
+        song = genius.search_song(song_search, artist_name)
+        if isinstance(song, type(None)) or not match(
+	            (song_search, artist_name), (song.title, song.artist)
+        ):
+            if i:
+                if log:
+                    log(f"Song '{song_search}' by '{artist_name}' not found on Genius")
+                return
+            else:
+                if log:
+                    log(f"Song '{song_search}' by '{artist_name}' not found on Genius trying cleaning")
+                song_search = clean(song_search)
+        else:
+            if i:
+                if log:
+                    log(f"Found match for '{song_search}' by '{artist_name}'")
+            break
+
+    return song
