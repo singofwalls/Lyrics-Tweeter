@@ -1,7 +1,9 @@
 import re
 import unidecode
 import string
+import time
 from difflib import SequenceMatcher
+import requests.exceptions
 
 
 # Closer to 1 == strings must match more closely to be considered a match
@@ -56,8 +58,18 @@ def clean(name):
     return name
 
 
-def match(song, other, log=None):
-    """Determine whether a song matches the result"""
+def match(song: tuple[str, str], other: tuple[str, str], log=None):
+    """
+    Determine whether a song matches the result.
+
+    song: (song_name, artist_name)
+    other: (song_name, artist_name)
+    """
+    if not isinstance(song, list) and not isinstance(song, tuple):
+        raise ValueError("Song must be a tuple")
+    if not isinstance(other, list) and not isinstance(other, tuple):
+        raise ValueError("Other must be a tuple")
+
     artist_name = clean(song[1])
     other_artist = clean(other[1])
     artist_dist = distance(artist_name, other_artist)
@@ -85,7 +97,22 @@ def get_genius_song(song_name, artist_name, genius, log=None):
     """Get the corresponding song from Genius."""
     song_search = song_name
     for i in range(0, 2):
-        song = genius.search_song(song_search, artist_name)
+        # Try once as is and once cleaned
+        song = None
+        for i in range(1, 8):
+            # Try several more times if there's timeouts but backoff
+            try:
+                song = genius.search_song(song_search, artist_name)
+            except requests.exceptions.Timeout:
+                print("Timeout from genius, sleeping")
+                time.sleep(i**2 / 10)
+            except Exception:
+                break
+            else:
+                break
+        else:
+            print("Too many timeouts, skipping song")
+
         if isinstance(song, type(None)) or not match(
 	            (song_search, artist_name), (song.title, song.artist)
         ):
