@@ -44,7 +44,12 @@ def distance(a: str, b: str):
 
 def remove_extra(name):
     """Remove the parentheses and hyphens from a song name."""
-    return re.sub(r"-[\S\s]*", "", re.sub(r"\([\w\W]*\)", "", name))
+    cleaned = re.sub(r"-[\S\s]*", "", re.sub(r"\([\w\W]*\)", "", name))
+    if not cleaned:
+        # if the entire name is within e.g. parens, don't remove everything
+        return name
+
+    return cleaned
 
 
 def clean(name):
@@ -83,8 +88,8 @@ def match(song: tuple[str, str], other: tuple[str, str], log=None):
     song_dist = distance(song_name, other_name)
     if (
         song_dist <= REQUIRED_SONG_SCORE
-        or song_name in other_name
-        or other_name in song_name
+        or (song_name and song_name in other_name)
+        or (other_name and other_name in song_name)
     ):
         return True
 
