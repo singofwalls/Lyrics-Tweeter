@@ -27,10 +27,10 @@ def clean_paragraphs(paragraphs, artist_name, song_name):
 
     for paragraph in paragraphs:
         for extraneous_pattern in EXTRANEOUS_TEXT:
-            extraneous_pattern = extraneous_pattern.replace("$BAND$", re.escape(artist_name))
-            extraneous_pattern = extraneous_pattern.replace("$SONG$", re.escape(song_name))
+            extraneous_pattern = extraneous_pattern.replace("$BAND$", unidecode.unidecode(re.escape(artist_name)))
+            extraneous_pattern = extraneous_pattern.replace("$SONG$", unidecode.unidecode(re.escape(song_name)))
 
-            paragraph = re.sub(extraneous_pattern, "", paragraph, flags=re.IGNORECASE)
+            paragraph = re.sub(extraneous_pattern, "", unidecode.unidecode(paragraph), flags=re.IGNORECASE)
 
         clean_paragraphs.append(paragraph)
 
