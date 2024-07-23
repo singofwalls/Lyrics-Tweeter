@@ -125,7 +125,7 @@ def get_spotify(s_creds, usernum):
     return spotipy.Spotify(auth=token)
 
 
-def get_twitter(t_creds):
+def get_twitter(t_creds) -> tweepy.Client:
     """Get the twitter object from which to make requests."""
     # Authorize Twitter
     client = tweepy.Client(
