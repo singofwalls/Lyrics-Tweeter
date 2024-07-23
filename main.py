@@ -5,18 +5,14 @@ import spotipy.util
 import tweepy
 import pylast
 import requests
-import unidecode
-from textdistance import levenshtein
 from better_profanity import profanity
-from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS
+from utility import clean_paragraphs, EXCLUDED_GENIUS_TERMS, clean, match, get_genius_song
 
 import json
 import random
 import urllib
 import datetime
 import traceback
-import re
-import string
 import sys
 
 
@@ -40,10 +36,6 @@ CREDS_FILE = "creds.json"
 PREV_SONGS = "previous_songs.json"
 MAX_PREV_SONGS = 300
 REPLAY_REDUCE_FACTOR = 1.5  # Divide CHANCE_TO_TWEET by this if song previously played in last MAX_PREV_SONGS
-
-# Closer to 1 == strings must match more closely to be considered a match
-REQUIRED_ARTIST_SCORE = 0.2
-REQUIRED_SONG_SCORE = 0.3
 
 
 def get_lastfm_link(artist, track, l_creds):
@@ -88,28 +80,6 @@ def get_apple_link(terms, cleaned=False):
     return url
 
 
-def get_genius_song(song_name, artist_name, genius):
-    """Get the corresponding song from Genius."""
-    song_search = song_name
-    for i in range(0, 2):
-        song = genius.search_song(song_search, artist_name)
-        if isinstance(song, type(None)) or not match(
-	            (song_search, artist_name), (song.title, song.artist)
-        ):
-            if i:
-                log(f"Song '{song_search}' by '{artist_name}' not found on Genius")
-                return
-            else:
-                log(f"Song '{song_search}' by '{artist_name}' not found on Genius trying cleaning")
-                song_search = clean(song_search)
-        else:
-            if i:
-                log(f"Found match for '{song_search}' by '{artist_name}'")
-            break
-
-    return song
-
-
 def get_spotify(s_creds, usernum):
     """Get the spotify object from which to make requests."""
     # Authorize Spotify
@@ -136,50 +106,6 @@ def get_twitter(t_creds) -> tweepy.Client:
     )
 
     return client
-
-
-def remove_extra(name):
-    """Remove the parentheses and hyphens from a song name."""
-    return re.sub(r"-[\S\s]*", "", re.sub(r"\([\w\W]*\)", "", name))
-
-
-def clean(name):
-    """Remove potential discrepencies from the string."""
-    name = remove_extra(name)
-    name = unidecode.unidecode(name)  # Remove diacritics
-    name = "".join(
-        list(filter(lambda c: c in (string.ascii_letters + string.digits + " "), name))
-    )
-    name = name.lower().strip()
-    return name
-
-
-def distance(str1, str2):
-    """Return the Needleman-Wunsch similarity between two strings."""
-    return levenshtein.normalized_distance(str1, str2)
-
-
-def match(song, other):
-    """Determine whether a song matches the result"""
-    artist_name = clean(song[1])
-    other_artist = clean(other[1])
-    artist_dist = distance(artist_name, other_artist)
-    if artist_dist > REQUIRED_ARTIST_SCORE:
-        log(f"{artist_name} != {other_artist}: {artist_dist} < {REQUIRED_ARTIST_SCORE}")
-        return False
-
-    song_name = clean(song[0])
-    other_name = clean(other[0])
-    song_dist = distance(song_name, other_name)
-    if (
-        song_dist <= REQUIRED_SONG_SCORE
-        or song_name in other_name
-        or other_name in song_name
-    ):
-        return True
-
-    log(f"{song_name} does not match {other_name}: {song_dist} < {REQUIRED_SONG_SCORE}")
-    return False
 
 
 def run(usernum, creds):
@@ -244,7 +170,7 @@ def run(usernum, creds):
     genius = lyricsgenius.Genius(
         creds["genius"]["client access token"], excluded_terms=EXCLUDED_GENIUS_TERMS
     )
-    song = get_genius_song(song_name, artist_name, genius)
+    song = get_genius_song(song_name, artist_name, genius, log)
 
     if isinstance(song, type(None)):
         log("Song not found on Genius")
